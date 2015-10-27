@@ -1,0 +1,61 @@
+#!/bin/sh
+
+#set -x
+
+# An example hook script to check the commit log message.
+# Called by "git commit" with one argument, the name of the file
+# that has the commit message.  The hook should exit with non-zero
+# status after issuing an appropriate message if it wants to stop the
+# commit.  The hook is allowed to edit the commit message file.
+#
+# To enable this hook, rename this file to "commit-msg".
+
+
+echo "$0: Script called after the user enters a commit message, before committing the snapshot."
+#This is the file which stores the commit message entered by the user. .git/COMMIT_EDITMSG
+
+COMMIT_MSG_FILE=$1
+proper_msg="no"
+
+echo "$0: Checking if there is a valid commit message entered"
+
+while read one_line;do
+
+	if [ ` echo $one_line | cut -c1 ` != "#" ];then
+		proper_msg="yes"
+	fi
+
+done < $COMMIT_MSG_FILE
+
+if [ $proper_msg = "yes" ];then
+	echo "$0: [ OK ]: It is a proper comment message file, continue committing."
+else
+	echo "$0: [ NOK ]: No proper commit message entered, aborting the commit."
+	exit 1
+fi
+
+echo "$0: Pre-check if the attachmentFile exists before committing..."
+FILE_TO_CHECK="attachment.txt"
+
+if [ ! -f $FILE_TO_CHECK ];then
+	echo "$0: [ NOK ]: $FILE_TO_CHECK doesnot exist, cannot commit. Aborting..."
+	exit 1
+else
+	echo "$0: [ OK ]: $FILE_TO_CHECK found, continue committing..."
+fi
+
+
+# Uncomment the below to add a Signed-off-by line to the message.
+# Doing this in a hook is a bad idea in general, but the prepare-commit-msg
+# hook is more suited to it.
+#
+# SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
+# grep -qs "^$SOB" "$1" || echo "$SOB" >> "$1"
+
+# This example catches duplicate Signed-off-by lines.
+
+test "" = "$(grep '^Signed-off-by: ' "$1" |
+	 sort | uniq -c | sed -e '/^[ 	]*1[ 	]/d')" || {
+	echo >&2 Duplicate Signed-off-by lines.
+	exit 1
+}

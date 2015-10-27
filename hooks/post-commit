@@ -1,0 +1,6 @@
+#!/bin/sh
+
+echo "$0: Script called after a successful commit"
+echo "$0: Sending mail to the group with the commit details..."
+git log -1 --pretty=email 
+exit 0
